@@ -1,6 +1,8 @@
 ---
 title: "Homelessness"
-output: html_document
+output: 
+  html_document: 
+    keep_md: true
 editor_options: 
   chunk_output_type: inline
 ---
@@ -25,34 +27,171 @@ I will refer you to this section of the HUD report for a detailed description of
 
 ### Load necessary packages
 
-```{r}
 
+```r
 #skimr provides a nice summary of a data set
 library(skimr)
 #leaps will be used for model selection
 library(leaps)
 #tidyverse contains packages we will use for processing and plotting data
 library(tidyverse)
+```
+
+```
+## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.0 ──
+```
+
+```
+## ✓ ggplot2 3.3.3     ✓ purrr   0.3.4
+## ✓ tibble  3.1.1     ✓ dplyr   1.0.5
+## ✓ tidyr   1.1.3     ✓ stringr 1.4.0
+## ✓ readr   1.4.0     ✓ forcats 0.5.1
+```
+
+```
+## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()
+```
+
+```r
 #readxl lets us read Excel files
 library(readxl)
 #GGally has a nice pairs plotting function
 library(GGally)
+```
+
+```
+## Registered S3 method overwritten by 'GGally':
+##   method from   
+##   +.gg   ggplot2
+```
+
+```r
 #corrplot has nice plots for correlation matrices
 library(corrplot)
+```
+
+```
+## corrplot 0.84 loaded
+```
+
+```r
 #gridExtra
 library(gridExtra)
+```
+
+```
+## 
+## Attaching package: 'gridExtra'
+```
+
+```
+## The following object is masked from 'package:dplyr':
+## 
+##     combine
+```
+
+```r
 #glmnet is used to fit glm's. It will be used for lasso and ridge regression models.
 library(glmnet)
+```
+
+```
+## Loading required package: Matrix
+```
+
+```
+## 
+## Attaching package: 'Matrix'
+```
+
+```
+## The following objects are masked from 'package:tidyr':
+## 
+##     expand, pack, unpack
+```
+
+```
+## Loaded glmnet 4.1-1
+```
+
+```r
 #tidymodels has a nice workflow for many models. We will use it for XGBoost
 library(tidymodels)
+```
+
+```
+## ── Attaching packages ────────────────────────────────────── tidymodels 0.1.3 ──
+```
+
+```
+## ✓ broom        0.7.6      ✓ rsample      0.0.9 
+## ✓ dials        0.0.9      ✓ tune         0.1.4 
+## ✓ infer        0.5.4      ✓ workflows    0.2.2 
+## ✓ modeldata    0.1.0      ✓ workflowsets 0.0.2 
+## ✓ parsnip      0.1.5      ✓ yardstick    0.0.8 
+## ✓ recipes      0.1.16
+```
+
+```
+## ── Conflicts ───────────────────────────────────────── tidymodels_conflicts() ──
+## x gridExtra::combine() masks dplyr::combine()
+## x scales::discard()    masks purrr::discard()
+## x Matrix::expand()     masks tidyr::expand()
+## x dplyr::filter()      masks stats::filter()
+## x recipes::fixed()     masks stringr::fixed()
+## x dplyr::lag()         masks stats::lag()
+## x Matrix::pack()       masks tidyr::pack()
+## x yardstick::spec()    masks readr::spec()
+## x recipes::step()      masks stats::step()
+## x Matrix::unpack()     masks tidyr::unpack()
+## x recipes::update()    masks Matrix::update(), stats::update()
+## ● Use tidymodels_prefer() to resolve common conflicts.
+```
+
+```r
 #xgboost lets us fit XGBoost models
 library(xgboost)
+```
+
+```
+## 
+## Attaching package: 'xgboost'
+```
+
+```
+## The following object is masked from 'package:dplyr':
+## 
+##     slice
+```
+
+```r
 #vip is used to visualize the importance of predicts in XGBoost models
 library(vip)
+```
 
+```
+## 
+## Attaching package: 'vip'
+```
+
+```
+## The following object is masked from 'package:utils':
+## 
+##     vi
+```
+
+```r
 library(broom)
 library(sjPlot)
+```
 
+```
+## Install package "strengejacke" from GitHub (`devtools::install_github("strengejacke/strengejacke")`) to load all sj-packages at once!
+```
+
+```r
 #Set the plotting theme
 theme_set(theme_gray())
 
@@ -68,7 +207,8 @@ set.seed(1)
 
 **$\rightarrow$ Load the data dictionary (call it `dictionary`) and view its contents using the function `View`.**
 
-```{r}
+
+```r
 dictionary <- read_xlsx("HUD TO3 - 05b Analysis File - Data Dictionary.xlsx")
 ```
 
@@ -81,8 +221,21 @@ dictionary <- read_xlsx("HUD TO3 - 05b Analysis File - Data Dictionary.xlsx")
 
 **$\rightarrow$ Load the data set contained in the file `05b_analysis_file_update.csv` and name the data frame `df`.**
 
-```{r}
+
+```r
 df <- read_csv("05b_analysis_file_update.csv")
+```
+
+```
+## 
+## ── Column specification ────────────────────────────────────────────────────────
+## cols(
+##   .default = col_double(),
+##   cocnumber = col_character(),
+##   state_abr = col_character(),
+##   dem_health_ins_acs5yr_2012 = col_logical()
+## )
+## ℹ Use `spec()` for the full column specifications.
 ```
 
 Refer to the data dictionary and the [HUD report]((https://www.huduser.gov/portal/sites/default/files/pdf/Market-Predictors-of-Homelessness.pdf)) to understand what variables are present.
@@ -90,7 +243,8 @@ Refer to the data dictionary and the [HUD report]((https://www.huduser.gov/porta
 
 **$\rightarrow$ Add variables to the list `variable_names` that we will keep for the analysis.**
 
-```{r}
+
+```r
 #Search through data dictionary to find other variables to include
 
 variable_names <- c("year", "cocnumber",
@@ -107,20 +261,21 @@ variable_names <- c("year", "cocnumber",
            
 "env_wea_avgtemp_noaa","env_wea_avgtemp_summer_noaa", "env_wea_precip_noaa", "env_wea_precip_annual_noaa"
 )
-           
 ```
 
 
 **$\rightarrow$ Select this subset of variables from the full data set. Call the new data frame `df_small`.**
 
-```{r}
+
+```r
 df_small <- df %>% dplyr::select(all_of(variable_names))
 ```
 
 
 **$\rightarrow$ Create a new dictionary for this subset of variables.**
 
-```{r}
+
+```r
 dictionary_small <- dictionary %>% filter(Variable %in% variable_names)
 ```
 
@@ -132,7 +287,8 @@ I used the data dictionary to create more readable names for the minimal set of 
 
 The data frame with renamed columns is called `df_hud`.
 
-```{r}
+
+```r
 #Add your new names to this list
 
 df_hud <- df_small %>% 
@@ -179,7 +335,6 @@ share_no_bachelors = dictionary_small$Variable[41],
 city_or_urban = dictionary_small$Variable[42],
 suburban = dictionary_small$Variable[43]
 )
-
 ```
 
 ### Identify and deal with missing values
@@ -188,7 +343,8 @@ suburban = dictionary_small$Variable[43]
 
 We only want to look at observations that has `total_homeless` values. Some years have missing data, so we will be using 2017 since it is complete.
 
-```{r}
+
+```r
 df_2017 <- df_hud %>% 
   filter(is.na(total_homeless) == FALSE) %>% 
   filter(year == 2017) 
@@ -196,7 +352,8 @@ df_2017 <- df_hud %>%
 
 **$\rightarrow$ Use the `mutate` function to create new rate_homeless variables in the data frame `df_2017` that are the counts per 10,000 people in the population.**
 
-```{r}
+
+```r
 df_2017 <- df_2017 %>%
   mutate(
     rate_sheltered = (total_homeless/total_population)*10000,
@@ -234,8 +391,8 @@ To compare the different approaches, we will use a training and testing split of
 There are several variables that we do not want to include as predictors. We want to remove demographic totals, the year, the CoC number, and the other homeless rates that we are not predicting. You may have additional variables to remove to create the data set that contains only the response variable and the predictors that you want to use.
 
 
-```{r}
 
+```r
 variable_remove = c("total_homeless", "total_sheltered", "total_unsheltered", "total_black", "total_latino_hispanic", "total_asian", "total_pacific_islander", "total_population_0_19", "total_population_65_plus", "total_female_population", "year", "coc_number", "total_population","rate_sheltered","rate_unsheltered")
 
 df_model <- df_2017 %>% 
@@ -247,15 +404,14 @@ df_model <- df_2017 %>%
 
 **We will split the data into training and testing sets, with 80% of the data kept for training.**
 
-```{r}
 
+```r
 #Do the split. Keep 80% for training. Use stratified sampling based on rate_homeless
 split <- initial_split(df_model, prop = 0.8, strata = rate_homeless)
 
 #Extract the training and testing splits
 df_train <- training(split)
 df_test <- testing(split)
-
 ```
 
 
@@ -267,7 +423,8 @@ df_test <- testing(split)
 **$\rightarrow$ Use the training data to fit a multiple linear regression model to predict `rate_homeless` using all possible predictor variables.**
 
 
-```{r}
+
+```r
 fit <- lm(rate_homeless~., df_train)
 s <- summary(fit)
 
@@ -276,11 +433,24 @@ s$coefficients[s$coefficients[,4] < 0.05,1] %>%
   data.frame() 
 ```
 
+```
+##                                      .
+## suburban                         -3.92
+## rate_unemployment                 1.44
+## poverty_rate                     -0.84
+## migration_4_year_change           2.43
+## proportion_one_person_households  1.34
+## total_Jan_precipitation           0.92
+```
+
 **$\rightarrow$ Plot the residuals to look for systematic patterns of residuals that might suggest a new model.**
 
-```{r}
+
+```r
 plot(fit,1)
 ```
+
+![](Clean-Homelessness-Project_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 There is a systematic pattern in the residual plot. 
 
@@ -289,27 +459,32 @@ There is a systematic pattern in the residual plot.
 
 **$\rightarrow$ Use the model to predict the homeless rate in the testing data.**
 
-```{r}
+
+```r
 lm_pred <- predict(fit, df_test)
 ```
 
 **$\rightarrow$ Make a scatter plot to compare the actual value and the predicted value of `rate_homeless`.**
 
-```{r}
+
+```r
 par(pty="s")
 plot(df_test$rate_homeless, lm_pred, xlab = "Measured homeless rate", ylab = "Predicted homeless rate", main = "Full linear model", pch = 20, asp =1, ylim = c(0,100), xlim=c(0,100), panel.first = grid(9, lty = 3, lwd = 1))
 abline(0,1, col = "red", lty = 2) 
 ```
+
+![](Clean-Homelessness-Project_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 The model seems to predict homelessness relatively better when there are lower rates of homelessness. For the measured rates of homelessness over 40%, the model underpredicts the homelessness rate.
 
 
 **$\rightarrow$ Compute the RMSE**
 
-```{r}
+
+```r
 lm_rmse <- sqrt(mean((df_test$rate_homeless- lm_pred)^2))
 ```
 
-The RMSE is `r lm_rmse`
+The RMSE is 6.9492825
 
 ### Subset selection
 
@@ -318,14 +493,16 @@ The RMSE is `r lm_rmse`
 
 **$\rightarrow$ Do best subset selection on the training data. Set the maximum number of variables to equal the number of predictor variables in the data set.**
 
-```{r}
+
+```r
 num_var <- ncol(df_train) - 1 # number of variables in the data set that will be used as predictors, this will be used to set the subset size.
 regfit_full <- regsubsets(rate_homeless ~ . , data = df_train, nvmax = num_var)
 ```
 
 **$\rightarrow$ Get the summary. We will use this after performing cross validation to determine the best model.**
 
-```{r}
+
+```r
 reg_summary <- summary(regfit_full)
 ```
 
@@ -334,7 +511,8 @@ reg_summary <- summary(regfit_full)
 
 **$\rightarrow$ Use 10-fold cross validation on the training data to determine the best subset of predictors in the model.**
 
-```{r}
+
+```r
 n <- nrow(df_train)
 k <- 10
 set.seed(1)
@@ -356,7 +534,8 @@ cv_errors_mean <- apply(cv_errors,2,mean)
 
 **$\rightarrow$ Plot the assessment measures vs. the number of predictors**
 
-```{r}
+
+```r
 par(mfrow = c(2,2))
 
 ind_cp = which.min(reg_summary$cp)
@@ -376,6 +555,8 @@ plot(cv_errors_mean,type = "b",xlab = "Number of variables",ylab = "Cross valida
 points(ind_cv, cv_errors_mean[ind_cv],col = "red",pch = 20)
 ```
 
+![](Clean-Homelessness-Project_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+
 - Adjusted R2 suggests that a model with 23 variables is the best.
 - CP suggests that a model with 15 variables is the best.
 - Both BIC and Cross Validation suggest that a model with 8 variables is the best.
@@ -386,7 +567,8 @@ points(ind_cv, cv_errors_mean[ind_cv],col = "red",pch = 20)
 
 **$\rightarrow$ Select the variables that are indicated by the best subset selection criterion that you choose (Cp, BIC, Adjusted R-squared, or CV) and produce a new, smaller data frame.**
 
-```{r}
+
+```r
 df_bic <- df_train %>% 
   dplyr::select(all_of(names(coef(regfit_full,ind_bic))[2:length(coef(regfit_full,ind_bic))]), "rate_homeless")
 
@@ -402,7 +584,8 @@ df_cv <- df_train %>%
 
 **$\rightarrow$ Fit the model using this subset. The `lm` object will help us to make predictions easily.**
 
-```{r}
+
+```r
 fit_bic <- lm(rate_homeless ~., data = df_bic)
 fit_adjr2 <- lm(rate_homeless ~., data = df_adjr2)
 fit_cp <- lm(rate_homeless ~., data = df_cp)
@@ -411,7 +594,8 @@ fit_cv <- lm(rate_homeless ~., data = df_cv)
 
 **$\rightarrow$ Generate predictions of homelessness in the testing data.**
 
-```{r}
+
+```r
 bic_pred <- predict(fit_bic, df_test)
 adjr2_pred <- predict(fit_adjr2, df_test)
 cp_pred <- predict(fit_cp, df_test)
@@ -420,20 +604,21 @@ cv_pred <- predict(fit_cv, df_test)
 
 **$\rightarrow$ Compute the RMSE. How does the RMSE compare to the error for the full model?**
 
-```{r}
+
+```r
 bic_rmse <- sqrt(mean((df_test$rate_homeless- bic_pred)^2))
 adjr2_rmse <- sqrt(mean((df_test$rate_homeless- adjr2_pred)^2))
 cp_rmse <- sqrt(mean((df_test$rate_homeless- cp_pred)^2))
 cv_rmse <- sqrt(mean((df_test$rate_homeless- cv_pred)^2))
 ```
 
-The RMSE for the BIC model is `r bic_rmse`
+The RMSE for the BIC model is 7.0645304
 
-The RMSE for the adjusted r-squared model is `r adjr2_rmse`
+The RMSE for the adjusted r-squared model is 6.9757962
 
-The RMSE for the cv model is `r cv_rmse`
+The RMSE for the cv model is 6.2590016
 
-The RMSE for the cp model is `r cp_rmse`
+The RMSE for the cp model is 7.138212
 
 
 ### Lasso
@@ -446,7 +631,8 @@ $$C(\boldsymbol{\beta}) = \sum_{i=1}^n(y_i - \beta_{0} - \sum_{j=1}^p\beta_{j}x_
 
 **$\rightarrow$ Prepare the data by creating a model matrix `x_train` from the training data. Create the model matrix using `model.matrix` so that it includes the training data for all predictors, but does not include a column for the intercept. Also create the training response data `y_train`.**
 
-```{r}
+
+```r
 x_train <- model.matrix(rate_homeless ~ ., df_train)[,-1] #Remove the intercept
 y_train <- df_train$rate_homeless
 ```
@@ -454,7 +640,8 @@ y_train <- df_train$rate_homeless
 
 **$\rightarrow$ Use cross-validation to find the best hyperparameter $\lambda$**
 
-```{r}
+
+```r
 #alpha = 1 says that we will use the lasso
 cv_lasso <- cv.glmnet(x_train, y_train, alpha = 1)
 ```
@@ -462,20 +649,25 @@ cv_lasso <- cv.glmnet(x_train, y_train, alpha = 1)
 
 **$\rightarrow$ Show error as a function of the hyperparameter $\lambda$ and its best value.**
 
-```{r}
+
+```r
 plot(cv_lasso)
 ```
 
-```{r}
+![](Clean-Homelessness-Project_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
+
+
+```r
 best_lam <- cv_lasso$lambda.min
 ```
 
-The best lambda (hyperparameter) is `r best_lam`.
+The best lambda (hyperparameter) is 0.487267.
 
 
 **$\rightarrow$ Fit the lasso with the best $\lambda$ using the function `glmnet`.**
 
-```{r}
+
+```r
 lasso_mod <- glmnet(x_train, y_train, alpha = 1, lambda = best_lam)
 ```
 
@@ -486,7 +678,8 @@ lasso_mod <- glmnet(x_train, y_train, alpha = 1, lambda = best_lam)
 
 **$\rightarrow$ Use the model to predict the homeless rate in the testing data.**
 
-```{r}
+
+```r
 x_test <- model.matrix(rate_homeless ~ .,df_test)[,-1] #Remove the intercept
 lasso_pred <- predict(lasso_mod, s = best_lam, newx = x_test)
 ```
@@ -495,21 +688,25 @@ lasso_pred <- predict(lasso_mod, s = best_lam, newx = x_test)
 
 **$\rightarrow$ Make a scatter plot to compare the actual value and the predicted value of `rate_homeless`.**
 
-```{r}
+
+```r
 par(pty="s")
 plot(df_test$rate_homeless, lasso_pred, xlab = "Measured homeless rate", ylab = "Predicted homeless rate", pch = 20, ylim = c(0,100), xlim=c(0,100), panel.first = grid(9, lty = 3, lwd = 1))
 abline(0,1, col = "red", lty = 2)
 ```
 
+![](Clean-Homelessness-Project_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
+
 The lasso model also seems to underpredict homelessness for areas with a higher actual homelessness rate.
 
 **$\rightarrow$ Compute the RMSE. How does it compare to the other models?**
 
-```{r}
+
+```r
 lasso_rmse <- sqrt(mean((df_test$rate_homeless - lasso_pred)^2))
 ```
 
-The Lasso RMSE is `r lasso_rmse`.
+The Lasso RMSE is 6.3247289.
 
 ### Ridge regression
 
@@ -527,7 +724,8 @@ $$C(\boldsymbol{\beta}) = \sum_{i=1}^n(y_i - \beta_{0} - \sum_{j=1}^p\beta_{j}x_
 
 **$\rightarrow$ Fit and assess a ridge regression model. How does it compare to the other models?**
 
-```{r}
+
+```r
 cv_ridge <- cv.glmnet(x_train,y_train,alpha = 0)
 best_lam <- cv_ridge$lambda.min
 ridge_mod <- glmnet(x_train, y_train, alpha = 0, lambda = best_lam)
@@ -536,7 +734,7 @@ ridge_rmse <- sqrt(mean((df_test$rate_homeless - ridge_pred)^2))
 ```
 
 
-The rmse is `r ridge_rmse`.
+The rmse is 6.5725872.
 
 ### XGBoost
 
@@ -548,7 +746,8 @@ The rmse is `r ridge_rmse`.
 
 **The model will be a boosted tree model, so we start by specifying the features of a `boost_tree` model. The`boost_tree` creates a specification of a model, but does not fit the model.**
 
-```{r}
+
+```r
 xgb_spec <- boost_tree(
   mode = "regression",  #We are solving a regression problem
   trees = 1000, 
@@ -564,9 +763,28 @@ xgb_spec <- boost_tree(
 xgb_spec
 ```
 
+```
+## Boosted Tree Model Specification (regression)
+## 
+## Main Arguments:
+##   mtry = tune()
+##   trees = 1000
+##   min_n = tune()
+##   tree_depth = tune()
+##   learn_rate = tune()
+##   loss_reduction = tune()
+##   sample_size = tune()
+## 
+## Engine-Specific Arguments:
+##   objective = reg:squarederror
+## 
+## Computational engine: xgboost
+```
+
 **Create a workflow that specifies the model formula and the model type. We are still setting up the model; this does not fit the model.**
 
-```{r}
+
+```r
 xgb_wf <- workflow() %>%
   add_formula(rate_homeless ~ .) %>%
   add_model(xgb_spec)
@@ -574,12 +792,39 @@ xgb_wf <- workflow() %>%
 xgb_wf
 ```
 
+```
+## ══ Workflow ════════════════════════════════════════════════════════════════════
+## Preprocessor: Formula
+## Model: boost_tree()
+## 
+## ── Preprocessor ────────────────────────────────────────────────────────────────
+## rate_homeless ~ .
+## 
+## ── Model ───────────────────────────────────────────────────────────────────────
+## Boosted Tree Model Specification (regression)
+## 
+## Main Arguments:
+##   mtry = tune()
+##   trees = 1000
+##   min_n = tune()
+##   tree_depth = tune()
+##   learn_rate = tune()
+##   loss_reduction = tune()
+##   sample_size = tune()
+## 
+## Engine-Specific Arguments:
+##   objective = reg:squarederror
+## 
+## Computational engine: xgboost
+```
+
 
 #### Fit the model
 
 **We need to fit all of the parameters that we specified as `tune()`. We will specify the parameter grid using the functions `grid_latin_hypercube`:**
 
-```{r}
+
+```r
 xgb_grid <- grid_latin_hypercube(
   tree_depth(),
   min_n(),
@@ -594,14 +839,16 @@ xgb_grid <- grid_latin_hypercube(
 
 **Create folds for cross-validation. **
 
-```{r}
+
+```r
 folds <- vfold_cv(df_train)
 ```
 
 
 **Do the parameter fitting. This will take some time.**
 
-```{r}
+
+```r
 xgb_res <- tune_grid(
   xgb_wf,              #The workflow
   resamples = folds,   #The training data split into folds
@@ -610,10 +857,50 @@ xgb_res <- tune_grid(
 )
 ```
 
+```
+## ! Fold01: internal: A correlation computation is required, but `estimate` is const...
+```
+
+```
+## ! Fold02: internal: A correlation computation is required, but `estimate` is const...
+```
+
+```
+## ! Fold03: internal: A correlation computation is required, but `estimate` is const...
+```
+
+```
+## ! Fold04: internal: A correlation computation is required, but `estimate` is const...
+```
+
+```
+## ! Fold05: internal: A correlation computation is required, but `estimate` is const...
+```
+
+```
+## ! Fold06: internal: A correlation computation is required, but `estimate` is const...
+```
+
+```
+## ! Fold07: internal: A correlation computation is required, but `estimate` is const...
+```
+
+```
+## ! Fold08: internal: A correlation computation is required, but `estimate` is const...
+```
+
+```
+## ! Fold09: internal: A correlation computation is required, but `estimate` is const...
+```
+
+```
+## ! Fold10: internal: A correlation computation is required, but `estimate` is const...
+```
+
 **Set up the final workflow with the best model parameters.**
 
-```{r}
 
+```r
 #Get the best model, according to RMSE
 best_rmse <- select_best(xgb_res, "rmse")
 
@@ -630,26 +917,58 @@ final_xgb <- finalize_workflow(
 
 **Fit the final model to the training data and predict the test data.**
 
-```{r}
+
+```r
 final_res <- last_fit(final_xgb, split)
 ```
 
 
 **Show the RMSE. Compare the result to the test RMSE for the other models.**
 
-```{r}
+
+```r
 xgb_rmse <- collect_metrics(final_res)$.estimate[1]
 ```
 
-The RMSE for XGBoost is `r xgb_rmse`.
+The RMSE for XGBoost is 6.9243758.
 
 **Plot the homelessness rate and the prediction**
 
-```{r}
+
+```r
 par(pty="s")
 plot(final_res$.predictions[[1]]$rate_homeless,final_res$.predictions[[1]]$.pred, pch = 20, title = "XGBoost", xlab = "Homeless rate", ylab = "Predicted homeless rate", ylim = c(0,100), xlim=c(0,100), panel.first = grid(9, lty = 3, lwd = 1))
+```
+
+```
+## Warning in plot.window(...): "title" is not a graphical parameter
+```
+
+```
+## Warning in plot.xy(xy, type, ...): "title" is not a graphical parameter
+```
+
+```
+## Warning in axis(side = side, at = at, labels = labels, ...): "title" is not a
+## graphical parameter
+
+## Warning in axis(side = side, at = at, labels = labels, ...): "title" is not a
+## graphical parameter
+```
+
+```
+## Warning in box(...): "title" is not a graphical parameter
+```
+
+```
+## Warning in title(...): "title" is not a graphical parameter
+```
+
+```r
 abline(0,1,col = "red", lty = 3)
 ```
+
+![](Clean-Homelessness-Project_files/figure-html/unnamed-chunk-42-1.png)<!-- -->
 
 XGBoost seems to underpredict homelessness rates in areas with actual homelessness rates over 30%.
 
@@ -657,12 +976,15 @@ XGBoost seems to underpredict homelessness rates in areas with actual homelessne
 
 **Look at which predictors are most important in the model**
 
-```{r}
+
+```r
 final_xgb %>%
   fit(data = df_train) %>%
   pull_workflow_fit() %>%
   vip(geom = "col")
 ```
+
+![](Clean-Homelessness-Project_files/figure-html/unnamed-chunk-43-1.png)<!-- -->
 
 ### Compare models
 
@@ -678,14 +1000,14 @@ final_xgb %>%
 
 |  | Model | RMSE|
 |:-- |:-- |:-- |
-|1. | Multiple Linear Regression (Statistical Significance) | `r lm_rmse`|
-|2. | Multiple Linear Regression (Best Subset Selection, BIC) | `r bic_rmse`|
-|2. | Multiple Linear Regression (Best Subset Selection, Adjusted r-squared) | `r adjr2_rmse`|
-|2. | Multiple Linear Regression (Best Subset Selection, CP) | `r cp_rmse`|
-|2. | Multiple Linear Regression (Best Subset Selection, CV) | `r cv_rmse`|
-|3. | Lasso | `r lasso_rmse`|
-|4. | Ridge Regression | `r ridge_rmse`|
-|5. | XGBoost | `r xgb_rmse` |
+|1. | Multiple Linear Regression (Statistical Significance) | 6.9492825|
+|2. | Multiple Linear Regression (Best Subset Selection, BIC) | 7.0645304|
+|2. | Multiple Linear Regression (Best Subset Selection, Adjusted r-squared) | 6.9757962|
+|2. | Multiple Linear Regression (Best Subset Selection, CP) | 7.138212|
+|2. | Multiple Linear Regression (Best Subset Selection, CV) | 6.2590016|
+|3. | Lasso | 6.3247289|
+|4. | Ridge Regression | 6.5725872|
+|5. | XGBoost | 6.9243758 |
 
 ## Conclusion
 
