@@ -1,18 +1,8 @@
----
-title: "Education inequality"
-output: 
-  html_document: 
-    keep_md: true
----
-
-
 # Introduction
 
 This project addresses education inequality in U.S. high schools. The quality of a high school education can be measured in multiple ways, but here we will focus on average student performance on the ACT or SAT exams that students take as part of the college application process.
 
 We expect a range of school performance on these exams, but is school performance predicted by socioeconomic factors? 
-
-$\rightarrow$ Complete the introduction with a description of the problem you are addressing. The introduction should include at least two paragraphs that describe (1) the general problem you are addressing and (2) the specific questions you are asking in this project.
 
 It is known that wealthier areas are known for having "better" schools. In this project, we are looking at an array of socioeconomic factors that could potentially be criterea for predicting quality of high school education in terms of ACT and SAT scores. There is no proof that these tests are indication of the quality of the schools, but it is a standardized and widely used assessment, which allows us to better analyze individual high school's performances and socioeconomic factors.
 
